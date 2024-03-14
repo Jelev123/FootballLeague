@@ -20,4 +20,8 @@
     <ProjectReference Include="..\FootballLeague.Core\FootballLeague.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Logs\" />
+  </ItemGroup>
+
 </Project>

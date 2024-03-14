@@ -1,6 +1,7 @@
 ﻿namespace FootballLeague.Core.Services.Team
 {
     using Amazon.CloudWatchLogs.Model;
+    using FootballLeague.Core.Constants;
     using FootballLeague.Core.Contracts.Team;
     using FootballLeague.Infrastructure.Data;
     using FootballLeague.Infrastructure.Data.Models;
@@ -22,11 +23,13 @@
 
         public async Task CreateAsync(CreateTeamInputModel model)
         {
-            bool isNameInUse = await IsTeamNameInUseAsync(model.TeamName);
+            bool isAlReadyExist = await IsTheNameAlreadyExist(model.TeamName);
 
-            if (isNameInUse)
+            if (isAlReadyExist)
             {
-                throw new ResourceAlreadyExistsException("Team name is already in use.");
+                throw new ResourceAlreadyExistsException(string.Format(
+                    ErrorMessages.DataAlreadyExists,
+                    typeof(Team).Name, model.TeamName));
             }
 
             var team = new Team
@@ -93,7 +96,7 @@
             return false;
         }
 
-        public async Task<bool> IsTeamNameInUseAsync(string teamName)
+        public async Task<bool> IsTheNameAlreadyExist(string teamName)
         => await data.Teams.AnyAsync(t => t.Name == teamName);
 
 

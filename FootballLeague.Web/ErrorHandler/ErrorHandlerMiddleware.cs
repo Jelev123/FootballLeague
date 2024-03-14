@@ -5,74 +5,51 @@
     using System.Threading.Tasks;
     using System;
     using System.Text.Json;
+    using Amazon.CloudWatchLogs.Model;
+    using FootballLeague.Data.Common.Error;
 
     public class ErrorHandlerMiddleware
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate next;
 
         public ErrorHandlerMiddleware(RequestDelegate next)
         {
-            _next = next;
+            this.next = next;
         }
 
         public async Task Invoke(HttpContext context)
         {
             try
             {
-                await _next(context);
+                await this.next(context);
             }
-            catch (Exception ex)
+            catch (Exception error)
             {
-                await HandleExceptionAsync(context, ex);
+                var response = context.Response;
+                response.ContentType = "application/json";
+
+                switch (error)
+                {
+                    case ArgumentException ae:
+                        response.StatusCode = (int)HttpStatusCode.Conflict;
+                        break;
+                    case ResourceAlreadyExistsException raee:
+                        response.StatusCode = (int)HttpStatusCode.Conflict;
+                        break;
+                    case ResourceNotFoundException rnfe:
+                        response.StatusCode = (int)HttpStatusCode.NotFound;
+                        break;
+                    case NullReferenceException nre:
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        break;
+                    default:
+                        response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        break;
+                }
+
+                var result = JsonSerializer.Serialize(new ErrorMessage { Message = error?.Message });
+                await response.WriteAsync(result);
             }
-        }
-
-        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
-        {
-            var response = context.Response;
-            response.ContentType = "application/json";
-            response.StatusCode = (int)GetStatusCode(exception);
-
-            var errorResponse = new ErrorResponse { Message = exception.Message };
-
-            var json = JsonSerializer.Serialize(errorResponse);
-            await response.WriteAsync(json);
-        }
-
-        public static HttpStatusCode GetStatusCode(Exception exception)
-        {
-            switch (exception)
-            {
-                case ArgumentException _:
-                    return HttpStatusCode.Conflict;
-                case ResourceAlreadyExistsException _:
-                    return HttpStatusCode.Conflict;
-                case ResourceNotFoundException _:
-                    return HttpStatusCode.NotFound;
-                case NullReferenceException _:
-                    return HttpStatusCode.BadRequest;
-                default:
-                    return HttpStatusCode.InternalServerError;
-            }
-        }
-    }
-
-    public class ErrorResponse
-    {
-        public string Message { get; set; }
-    }
-
-    public class ResourceAlreadyExistsException : Exception
-    {
-        public ResourceAlreadyExistsException(string message) : base(message)
-        {
-        }
-    }
-
-    public class ResourceNotFoundException : Exception
-    {
-        public ResourceNotFoundException(string message) : base(message)
-        {
         }
     }
 }

@@ -1,7 +1,11 @@
 ﻿namespace FootballLeague.Core.Services.Team
 {
+    using FootballLeague.Core.Constants;
+    using FootballLeague.Core.Constants.Logger;
     using FootballLeague.Core.Contracts.Loger;
     using FootballLeague.Core.Contracts.Team;
+    using FootballLeague.Core.Handlers.ErrorHandlers;
+    using FootballLeague.Infrastructure.Data.Models;
     using FootballLeague.Infrastructure.InputModels.Team;
     using System;
     using System.Collections.Generic;
@@ -20,129 +24,102 @@
 
         public async Task CreateAsync(CreateTeamInputModel model)
         {
+            loggerService.LogInfo(RequestType.CreateTeam.ToString());
 
-            loggerService.LogInfo("Creating team...");
-            bool isInUse = await this.IsTeamNameInUseAsync(model.TeamName);
-            if (isInUse)
+            bool isTheNameAlreadyExist = await this.IsTheNameAlreadyExist(model.TeamName);
+
+            if (!isTheNameAlreadyExist)
             {
                 await teamService.CreateAsync(model);
-                loggerService.LogInfo("Team created successfully.");
+
+                loggerService.LogInfo(RequestStatus.Success.ToString());
             }
             else
             {
-                loggerService.LogError($"Failed to create team");
+                loggerService.LogError(RequestStatus.Failed.ToString());
             }
         }
 
         public async Task<bool> DeleteTeamAsync(int teamId)
         {
-            try
+            loggerService.LogInfo(RequestType.DeleteTeam.ToString());
+
+            if (await teamService.DeleteTeamAsync(teamId))
             {
-                loggerService.LogInfo("Deleting team...");
-                await teamService.DeleteTeamAsync(teamId);
-                loggerService.LogInfo("Team deleted successfully.");
+                loggerService.LogInfo(RequestStatus.Success.ToString());
+
                 return true;
             }
-            catch (Exception ex)
+            else
             {
-                loggerService.LogError($"Failed to delete team: {ex.Message}");
+                loggerService.LogInfo(RequestStatus.Failed.ToString());
+
                 return false;
             }
-
         }
 
         public async Task<bool> EditTeamAsync(EditTeamInputModel model, int teamId)
         {
-            try
+            loggerService.LogInfo(RequestType.UpdateTeam.ToString());
+
+            bool editSuccess = await teamService.EditTeamAsync(model, teamId);
+
+            if (editSuccess)
             {
-                loggerService.LogInfo("Editing team...");
-                bool editSuccess = await teamService.EditTeamAsync(model, teamId);
-                if (editSuccess)
-                {
-                    loggerService.LogInfo("Team edited successfully.");
-                    return true;
-                }
-                else
-                {
-                    loggerService.LogError($"Failed to edit team: Team not found.");
-                    return false;
-                }
+                loggerService.LogInfo(RequestStatus.Success.ToString());
+                return true;
             }
-            catch (Exception ex)
+            else
             {
-                loggerService.LogError($"Failed to edit team: {ex.Message}");
+                loggerService.LogError(RequestStatus.Failed.ToString());
                 return false;
             }
-
-            return true;
         }
 
         public async Task<IEnumerable<AllTeamsModel>> GetAllTeamsAsync()
         {
-            try
-            {
-                loggerService.LogInfo("Getting teams...");
-                var teams = await teamService.GetAllTeamsAsync();
-                loggerService.LogInfo("All teams were retrieved successfully.");
-                return teams;
-            }
-            catch (Exception ex)
-            {
-                loggerService.LogError($"Failed to get teams: {ex.Message}");
-                throw;
-            }
+            loggerService.LogInfo(RequestType.GetAllTeams.ToString());
 
-            return null;
+            var teams = await teamService.GetAllTeamsAsync();
+
+            loggerService.LogInfo(RequestStatus.Success.ToString());
+
+            return teams;
         }
 
         public async Task<ICollection<AllTeamsRanking>> GetAllTeamsRankingAsync()
         {
-            try
-            {
-                loggerService.LogInfo("Getting teams...");
-                var teams = await teamService.GetAllTeamsRankingAsync();
-                loggerService.LogInfo("All teams by rank were retrieved successfully.");
-                return teams;
-            }
-            catch (Exception ex)
-            {
-                loggerService.LogError($"Failed to get teams: {ex.Message}");
-                throw;
-            }
-            return null;
+            loggerService.LogInfo(RequestType.GetAllTeams.ToString());
+
+            var teams = await teamService.GetAllTeamsRankingAsync();
+
+            loggerService.LogInfo(RequestStatus.Success.ToString());
+
+            return teams;
         }
 
         public async Task<TeamByIdInputModel> GetTeamById(int teamId)
         {
-            loggerService.LogInfo("Getting team...");
+            loggerService.LogInfo(RequestType.GetTeam.ToString());
+
             var team = await teamService.GetTeamById(teamId);
-            loggerService.LogInfo("Team were got successfully.");
+
+            loggerService.LogInfo(RequestStatus.Success.ToString());
+
             return team;
         }
 
-        public async Task<bool> IsTeamNameInUseAsync(string teamName)
+        public async Task<bool> IsTheNameAlreadyExist(string teamName)
         {
-            try
-            {
+            bool isAlreadyExist = await teamService.IsTheNameAlreadyExist(teamName);
 
-                loggerService.LogInfo("Checking the team name");
-                bool isInUse = await teamService.IsTeamNameInUseAsync(teamName);
-                if (!isInUse)
-                {
-                    loggerService.LogInfo("The name is not used");
-                    return true;
-                }
-                else
-                {
-                    loggerService.LogError($"The name is in use");
-                    return false;
-                }
-            }
-            catch (Exception ex)
+            if (isAlreadyExist)
             {
-                loggerService.LogError($"The name is in use {ex.Message}");
-                return false;
+                throw new ResourceAlreadyExistsException(string.Format(
+                ErrorMessages.DataAlreadyExists,
+                typeof(Team).Name, teamName));
             }
+            return false;
         }
     }
 }

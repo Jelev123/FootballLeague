@@ -6,7 +6,7 @@
 
     public interface ITeamService
     {
-        Task<bool> IsTeamNameInUseAsync(string teamName);
+        Task<bool> IsTheNameAlreadyExist(string teamName);
         Task CreateAsync(CreateTeamInputModel model);
         Task<IEnumerable<AllTeamsModel>> GetAllTeamsAsync();
         Task<ICollection<AllTeamsRanking>> GetAllTeamsRankingAsync();

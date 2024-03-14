@@ -1,7 +1,9 @@
-﻿namespace FootballLeague.Core.Constants
+﻿namespace FootballLeague.Core.Constants.Logger
 {
-    public static class ErrorMessages
+    public class LoggerConstants
     {
         public const string DataAlreadyExists = @"{0} - '{1}' already exists!";
+
+        
     }
 }
