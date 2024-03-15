@@ -1,4 +1,4 @@
-﻿namespace FootballLeague.Data.Common.Models
+﻿namespace FootballLeague.Infrastructure.Models
 {
     using System.ComponentModel.DataAnnotations;
     using System;

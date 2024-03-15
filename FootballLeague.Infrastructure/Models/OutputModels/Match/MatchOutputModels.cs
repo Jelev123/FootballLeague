@@ -1,8 +1,8 @@
-﻿namespace FootballLeague.Infrastructure.InputModels.Match
+﻿namespace FootballLeague.Infrastructure.Models.OutputModels.Match
 {
     using System;
 
-    public class AllMatchesInputModels
+    public class MatchOutputModels
     {
         public string HomeTeam { get; set; }
         public string AwayTeam { get; set; }

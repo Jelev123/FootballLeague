@@ -1,8 +1,8 @@
 ﻿namespace FootballLeague.Configuaration
 {
     using FootballLeague.Core.Contracts.Loger;
-    using FootballLeague.Core.Contracts.Match;
-    using FootballLeague.Core.Contracts.Team;
+    using FootballLeague.Core.Interfaces.Match;
+    using FootballLeague.Core.Interfaces.Team;
     using FootballLeague.Core.Services.Logger;
     using FootballLeague.Core.Services.Match;
     using FootballLeague.Core.Services.Team;

@@ -1,9 +1,6 @@
-﻿namespace FootballLeague.Infrastructure.InputModels.Match
+﻿namespace FootballLeague.Infrastructure.Models.InputModels.Match
 {
-    using System;
-    using System.ComponentModel.DataAnnotations;
-
-    public class UpdatePointsInputModel
+    public class UpdatePointsModel
     {  
         public int HomeTeamId { get; set; }
         public int AwayTeamId { get; set; }

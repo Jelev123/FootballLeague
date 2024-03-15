@@ -1,11 +1,10 @@
 ﻿namespace FootballLeague.Core.Services.Team
 {
-    using Amazon.CloudWatchLogs.Model;
-    using FootballLeague.Core.Constants;
-    using FootballLeague.Core.Contracts.Team;
+    using FootballLeague.Core.Interfaces.Team;
     using FootballLeague.Infrastructure.Data;
     using FootballLeague.Infrastructure.Data.Models;
-    using FootballLeague.Infrastructure.InputModels.Team;
+    using FootballLeague.Infrastructure.Models.InputModels.Team;
+    using FootballLeague.Infrastructure.Models.OutputModels.Team;
     using Microsoft.EntityFrameworkCore;
     using System;
     using System.Collections.Generic;
@@ -21,17 +20,8 @@
             this.data = data;
         }
 
-        public async Task CreateAsync(CreateTeamInputModel model)
+        public async Task CreateAsync(CreateTeamModel model)
         {
-            bool isNameAlReadyExist = await IsTheNameAlreadyExist(model.TeamName);
-
-            if (isNameAlReadyExist)
-            {
-                throw new ResourceAlreadyExistsException(string.Format(
-                    ErrorMessages.DataAlreadyExists,
-                    typeof(Team).Name, model.TeamName));
-            }
-
             var team = new Team
             {
                 Name = model.TeamName,
@@ -44,11 +34,11 @@
         }
 
 
-        public async Task<IEnumerable<AllTeamsModel>> GetAllTeamsAsync()
+        public async Task<IEnumerable<AllTeamsOutputModel>> GetAllTeamsAsync()
         {
             return await data.Teams
                       .Where(team => !team.IsDeleted)
-                      .Select(t => new AllTeamsModel
+                      .Select(t => new AllTeamsOutputModel
                       {
                           Name = t.Name,
                           CreatedOn = t.CreatedOn,
@@ -56,10 +46,10 @@
                       }).ToListAsync();
         }
 
-        public async Task<TeamByIdInputModel> GetTeamById(int teamId)
+        public async Task<TeamByIdOutputModel> GetTeamByIdAsync(int teamId)
         {
             return await data.Teams.Where(team => team.Id == teamId && team.IsDeleted == false)
-            .Select(t => new TeamByIdInputModel
+            .Select(t => new TeamByIdOutputModel
             {
                 Name = t.Name,
                 Points = t.Points,
@@ -69,91 +59,66 @@
                 CreatedOn = t.CreatedOn,
                 ModifiedOn = t.ModifiedOn,
             }).FirstOrDefaultAsync();
-
         }
-        public async Task<bool> EditTeamAsync(EditTeamInputModel model, int teamId)
+
+        public async Task EditTeamAsync(EditTeamInputModel model, int teamId)
         {
             var team = await data.Teams.FirstOrDefaultAsync(t => t.Id == teamId);
 
             if (team != null)
             {
-                team.Name = model.Name;
+                team.Name = model.TeamName;
                 team.ModifiedOn = DateTime.UtcNow;
 
                 await data.SaveChangesAsync();
-                return true;
             }
-
-            return false;
         }
 
-        public async Task<bool> DeleteTeamAsync(int teamId)
+        public async Task DeleteTeamAsync(int teamId)
         {
             var team = await data.Teams
                 .Where(team => !team.IsDeleted)
                 .FirstOrDefaultAsync(team => team.Id == teamId);
 
-            if (team != null)
-            {
-                team.IsDeleted = true;
-                team.ModifiedOn = DateTime.UtcNow;
-                team.DeletedOn = DateTime.UtcNow;
-                await data.SaveChangesAsync();
-                return true;
-            }
 
-            throw new ResourceNotFoundException(string.Format(
-                    ErrorMessages.DataDoesNotExist,
-                    typeof(Team).Name, "id", teamId));
+            team.IsDeleted = true;
+            team.ModifiedOn = DateTime.UtcNow;
+            team.DeletedOn = DateTime.UtcNow;
+            await data.SaveChangesAsync();
         }
 
-        public async Task<bool> IsTheNameAlreadyExist(string teamName)
+        public async Task<ICollection<TeamRankingOutputModel>> GetAllTeamsRankingAsync()
         {
-            return await data.Teams.AnyAsync(t => t.Name == teamName);
-        }
-
-        public async Task<ICollection<AllTeamsRanking>> GetAllTeamsRankingAsync()
-        {
-            var teamsRanking = await GetTeamsWithRankingDataAsync();
-            OrderTeamsByRanking(ref teamsRanking);
-            SetRankingPositions(ref teamsRanking);
-            return teamsRanking;
-        }
-
-        private async Task<ICollection<AllTeamsRanking>> GetTeamsWithRankingDataAsync()
-        {
-            return await data.Teams
+            var teamsRanking = await data.Teams
                 .Where(team => !team.IsDeleted)
-                .Select(team => new AllTeamsRanking
+                .Select(team => new TeamRankingOutputModel
                 {
-                    Id = team.Id,
                     Name = team.Name,
                     Points = team.Points,
                     HomeMatchesPlayed = team.HomeMatches.Count(),
                     AwayMatchesPlayed = team.AwayMatches.Count(),
-                    MatchesWon = team.HomeMatches.Count(x => x.HomeTeamGoals > x.AwayTeamGoals) +
-                                  team.AwayMatches.Count(x => x.AwayTeamGoals > x.HomeTeamGoals),
-                    MatchesLost = team.HomeMatches.Count(x => x.HomeTeamGoals < x.AwayTeamGoals) +
-                                  team.AwayMatches.Count(x => x.AwayTeamGoals < x.HomeTeamGoals),
+                    MatchesWon = team.HomeMatches.Count(t => t.HomeTeamGoals > t.AwayTeamGoals) +
+                                 team.AwayMatches.Count(t => t.AwayTeamGoals > t.HomeTeamGoals),
                     MatchesDraw = team.HomeMatches.Count(x => x.HomeTeamGoals == x.AwayTeamGoals) +
-                                  team.AwayMatches.Count(x => x.AwayTeamGoals == x.HomeTeamGoals),
+                                  team.AwayMatches.Count(t => t.AwayTeamGoals == t.HomeTeamGoals),
+                    MatchesLost = team.HomeMatches.Count(x => x.HomeTeamGoals < x.AwayTeamGoals) +
+                                  team.AwayMatches.Count(t => t.AwayTeamGoals < t.HomeTeamGoals),
                     TotalMatchesPlayed = team.HomeMatches.Count() + team.AwayMatches.Count(),
-                    TotalGoalScored = team.HomeMatches.Sum(x => x.HomeTeamGoals) +
-                                  team.AwayMatches.Sum(x => x.AwayTeamGoals),
+                    TotalGoalScored = team.HomeMatches.Sum(t => t.HomeTeamGoals) +
+                                  team.AwayMatches.Sum(t => t.AwayTeamGoals),
                 })
-                .ToListAsync();
+                 .OrderByDescending(team => team.Points)
+                 .ThenByDescending(team => team.TotalGoalScored)
+                 .ThenByDescending(team => team.MatchesWon)
+                 .ThenByDescending(team => team.MatchesDraw)
+                 .ToListAsync();
+
+            await Task.Run(() => SetRankingPositions(teamsRanking));
+
+            return teamsRanking;
         }
 
-        private void OrderTeamsByRanking(ref ICollection<AllTeamsRanking> teamsRanking)
-        {
-            teamsRanking = teamsRanking.OrderByDescending(team => team.Points)
-                                       .ThenByDescending(team => team.TotalGoalScored)
-                                       .ThenByDescending(team => team.MatchesWon)
-                                       .ThenByDescending(team => team.MatchesDraw)
-                                       .ToList();
-        }
-
-        private void SetRankingPositions(ref ICollection<AllTeamsRanking> teamsRanking)
+        private void SetRankingPositions(ICollection<TeamRankingOutputModel> teamsRanking)
         {
             var index = 1;
             foreach (var team in teamsRanking)

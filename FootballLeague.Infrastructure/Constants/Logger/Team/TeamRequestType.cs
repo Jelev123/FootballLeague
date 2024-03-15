@@ -1,4 +1,4 @@
-﻿namespace FootballLeague.Core.Constants.Logger.Team
+﻿namespace FootballLeague.Infrastructure.Constants.Logger.Team
 {
     public enum TeamRequestType
     {

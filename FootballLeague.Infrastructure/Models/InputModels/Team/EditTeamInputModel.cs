@@ -1,10 +1,9 @@
-﻿namespace FootballLeague.Infrastructure.InputModels.Team
+﻿namespace FootballLeague.Infrastructure.Models.InputModels.Team
 {
     using FootballLeague.Infrastructure.Constants.Attributes;
     using System.ComponentModel.DataAnnotations;
 
-
-    public class CreateTeamInputModel
+    public class EditTeamInputModel
     {
         [Required(ErrorMessage = ValidateMessages.Required)]
         [StringLength(Attributes.TeamNameMaxLength,

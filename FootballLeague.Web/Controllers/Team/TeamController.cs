@@ -1,7 +1,8 @@
 ﻿namespace FootballLeague.Controllers.Team
 {
-    using FootballLeague.Core.Contracts.Team;
-    using FootballLeague.Infrastructure.InputModels.Team;
+    using FootballLeague.Core.Interfaces.Team;
+    using FootballLeague.Infrastructure.Models.InputModels.Team;
+    using FootballLeague.Infrastructure.Models.OutputModels.Team;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections;
     using System.Collections.Generic;
@@ -19,40 +20,40 @@
             this.teamService = teamService;
         }
 
-        [HttpPost("Create/")]
-        public async Task<ActionResult> CreateTeam(CreateTeamInputModel model)
+        [HttpPost("create/")]
+        public async Task<ActionResult> CreateTeam(CreateTeamModel model)
         {
             await teamService.CreateAsync(model);
             return Ok();
         }
 
-        [HttpGet("AllTeams")]
-        public async Task<ActionResult<IEnumerable<AllTeamsModel>>> AllTeams()
+        [HttpGet("allTeams")]
+        public async Task<ActionResult<IEnumerable<AllTeamsOutputModel>>> AllTeams()
         {
             var allTeams = await teamService.GetAllTeamsAsync();
             return allTeams.ToList();
         }
 
-        [HttpGet("TeamById")]
-        public async Task<ActionResult<TeamByIdInputModel>> TeamByid(int teamId)
+        [HttpGet("teamById")]
+        public async Task<ActionResult<TeamByIdOutputModel>> TeamByid(int teamId)
         {
-            var team = await teamService.GetTeamById(teamId);
+            var team = await teamService.GetTeamByIdAsync(teamId);
             return team;
         }
 
-        [HttpPut("Edit")]
+        [HttpPut("edit")]
         public async Task EditTeam(EditTeamInputModel model, int teamId)
         {
            await teamService.EditTeamAsync(model, teamId);
         }
 
-        [HttpDelete("Delete")]
+        [HttpDelete("delete")]
         public async Task DeleteTeam(int teamId)
         {
             await teamService.DeleteTeamAsync(teamId);
         }
 
-        [HttpGet("TeamRanking")]
+        [HttpGet("teamRanking")]
         public async Task<ActionResult<IEnumerable>> TeamRanking()
         {
            var teamsRanking = await teamService.GetAllTeamsRankingAsync();

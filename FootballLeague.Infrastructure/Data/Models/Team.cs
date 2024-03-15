@@ -1,6 +1,6 @@
 ﻿namespace FootballLeague.Infrastructure.Data.Models
 {
-    using FootballLeague.Data.Common.Models;
+    using FootballLeague.Infrastructure.Models;
     using System.Collections.Generic;
 
     public class Team : BaseDeletableModel<int>

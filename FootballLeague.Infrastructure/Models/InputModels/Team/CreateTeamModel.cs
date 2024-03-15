@@ -1,14 +1,15 @@
-﻿namespace FootballLeague.Infrastructure.InputModels.Team
+﻿namespace FootballLeague.Infrastructure.Models.InputModels.Team
 {
     using FootballLeague.Infrastructure.Constants.Attributes;
     using System.ComponentModel.DataAnnotations;
 
-    public class EditTeamInputModel
+
+    public class CreateTeamModel
     {
         [Required(ErrorMessage = ValidateMessages.Required)]
         [StringLength(Attributes.TeamNameMaxLength,
             ErrorMessage = ValidateMessages.MinMaxLength,
             MinimumLength = Attributes.TeamNameMinLength)]
-        public string Name { get; set; }
+        public string TeamName { get; set; }
     }
 }

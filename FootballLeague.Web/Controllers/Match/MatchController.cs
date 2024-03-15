@@ -1,7 +1,8 @@
 ﻿namespace FootballLeague.Controllers.Match
 {
-    using FootballLeague.Core.Contracts.Match;
-    using FootballLeague.Infrastructure.InputModels.Match;
+    using FootballLeague.Core.Interfaces.Match;
+    using FootballLeague.Infrastructure.Models.InputModels.Match;
+    using FootballLeague.Infrastructure.Models.OutputModels.Match;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections.Generic;
     using System.Linq;
@@ -18,34 +19,34 @@
             this.matchService = matchService;
         }
 
-        [HttpPost("Create/")]
-        public async Task<IActionResult> CreateTeam(CreateMatchInputModel model)
+        [HttpPost("create/")]
+        public async Task<ActionResult> CreateMatch(CreateMatchModel model)
         {
             await matchService.CreateMatchAsync(model);
             return Ok();
         }
 
-        [HttpGet("AllMatches")]
-        public async Task<ActionResult<IEnumerable<AllMatchesInputModels>>> AllMatches()
+        [HttpGet("allMatches")]
+        public async Task<ActionResult<IEnumerable<MatchOutputModels>>> AllMatches()
         {
             var allMatches = await matchService.AllMatchesAsync();
             return allMatches.ToList();
         }
 
-        [HttpGet("MatchById")]
-        public async Task<ActionResult<MatchByIdInputModel>> MatchById(int matchId)
+        [HttpGet("matchById")]
+        public async Task<ActionResult<MatchOutputModels>> MatchById(int matchId)
         {
             var match = await matchService.GetmatchByIdAsync(matchId);
             return match;
         }
 
-        [HttpPut("Edit")]
-        public async Task EditMatch(EditMatchInputModel model, int matchId)
+        [HttpPut("edit")]
+        public async Task EditMatch(EditMatchModel model, int matchId)
         {
            await matchService.EditMatchAsync(model, matchId);
         }
 
-        [HttpDelete("Delete")]
+        [HttpDelete("delete")]
         public async Task DeleteMatch(int matchId)
         {
             await matchService.DeleteMatchAsync(matchId);

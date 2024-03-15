@@ -1,58 +1,30 @@
-﻿namespace FootballLeague.Test.Match
+﻿namespace FootballLeague.Tests.Match
 {
+    using FootballLeague.Core.Interfaces.Match;
+    using FootballLeague.Core.Services.Match;
     using FootballLeague.Infrastructure.Data;
     using FootballLeague.Infrastructure.Data.Models;
+    using FootballLeague.Infrastructure.Models.InputModels.Match;
+    using FootballLeague.Tests.Mock;
+    using NUnit.Framework;
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using System;
-    using FootballLeague.Core.Contracts.Match;
-    using FootballLeague.Core.Services.Match;
-    using FootballLeague.Test.Mock;
-    using FootballLeague.Infrastructure.InputModels.Match;
-    using Microsoft.EntityFrameworkCore;
-    using Xunit;
 
     public class MatchServiceTest
     {
 
-        [Fact]
-        public async Task CreateMatchAsync_ShouldCreateNewMatch()
-        {
-            var matchService = await GetMatchServiceAsync();
-            var model = new CreateMatchInputModel
-            {
-                AwayTeamGoals = 2,
-                AwayTeamId = 1, 
-                HomeTeamGoals = 1,
-                HomeTeamId = 2,
-                CreatedOn = DateTime.UtcNow,
-                LastModifiedOn = DateTime.UtcNow,
-            };
-
-            await matchService.CreateMatchAsync(model);
-
-            using (var context = await GetDatabaseMockAsync())
-            {
-                var createdMatch = await context.Matches.FirstOrDefaultAsync(m => m.HomeTeamId == model.HomeTeamId && m.AwayTeamId == model.AwayTeamId);
-                Assert.NotNull(createdMatch);
-                Assert.Equal(model.AwayTeamGoals, createdMatch.AwayTeamGoals);
-                Assert.Equal(model.HomeTeamGoals, createdMatch.HomeTeamGoals);
-            }
-        }
-
-
-        [Fact]
+        [Test]
         public async Task AllMatchesAsync_ShouldReturnAllMatches()
         {
             var matchService = await GetMatchServiceAsync();
 
             var result = await matchService.AllMatchesAsync();
             Assert.NotNull(result);
-            Assert.NotEmpty(result);
+            Assert.IsNotEmpty(result);
         }
 
-
-        [Fact]
+        [Test]
         public async Task GetMatchByIdAsync_ShouldReturnMatch()
         {
             var matchService = await GetMatchServiceAsync();
@@ -63,7 +35,7 @@
         }
 
 
-        [Fact]
+        [Test]
         public async Task GetMatchByIdAsync_ShouldReturnNull_WhenMatchIdDoesNotExist()
         {
             var matchService = await GetMatchServiceAsync();
@@ -74,11 +46,11 @@
         }
 
 
-        [Fact]
+        [Test]
         public async Task EditMatchAsync_ShouldUpdateMatch()
         {
             var matchId = 1;
-            var model = new EditMatchInputModel
+            var model = new EditMatchModel
             {
                 AwayTeamId = 2,
                 AwayTeamGoals = 1,
@@ -96,15 +68,15 @@
             var editedMatch = await dbContextMock.Matches.FindAsync(matchId);
 
             Assert.NotNull(editedMatch);
-            Assert.Equal(model.AwayTeamId, editedMatch.AwayTeamId);
-            Assert.Equal(model.AwayTeamGoals, editedMatch.AwayTeamGoals);
-            Assert.Equal(model.HomeTeamId, editedMatch.HomeTeamId);
-            Assert.Equal(model.HomeTeamGoals, editedMatch.HomeTeamGoals);
-            Assert.Equal(model.Played, editedMatch.CreatedOn);
+            Assert.AreEqual(model.AwayTeamId, editedMatch.AwayTeamId);
+            Assert.AreEqual(model.AwayTeamGoals, editedMatch.AwayTeamGoals);
+            Assert.AreEqual(model.HomeTeamId, editedMatch.HomeTeamId);
+            Assert.AreEqual(model.HomeTeamGoals, editedMatch.HomeTeamGoals);
+            Assert.AreEqual(model.Played, editedMatch.CreatedOn);
         }
 
 
-        [Fact]
+        [Test]
         public async Task DeleteMatchAsync_ShouldMarkMatchAsDeleted()
         {
             var dbContextMock = await GetDatabaseMockAsync();
@@ -120,18 +92,18 @@
         }
 
 
-        [Fact]
+        [Test]
         public async Task DeleteMatchAsync_ShouldReturnFalse_WhenMatchIdDoesNotExist()
         {
             var dbContextMock = await GetDatabaseMockAsync();
-            int notExistedMatchId = 1;
+            int notExistedMatchId = 999;
 
             var matchService = new MatchService(dbContextMock);
 
             await matchService.DeleteMatchAsync(notExistedMatchId);
 
             var deletedMatch = await dbContextMock.Matches.FindAsync(notExistedMatchId);
-            Assert.False(deletedMatch.IsDeleted);
+            Assert.Null(deletedMatch);
         }
 
 

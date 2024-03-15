@@ -64,7 +64,7 @@
             var teamService = await GetTeamServiceAsync();
 
 
-            var result = await teamService.GetTeamById(1);
+            var result = await teamService.GetTeamByIdAsync(1);
 
             Assert.IsType<TeamByIdInputModel>(result);
             Assert.Equal("Real Madrid", result.Name);

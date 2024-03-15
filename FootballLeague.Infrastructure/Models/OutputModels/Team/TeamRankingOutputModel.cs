@@ -1,8 +1,7 @@
-﻿namespace FootballLeague.Infrastructure.InputModels.Team
+﻿namespace FootballLeague.Infrastructure.Models.OutputModels.Team
 {
-    public class AllTeamsRanking
+    public class TeamRankingOutputModel
     {
-        public int Id { get; set; }
         public string Name { get; set; }
         public int Rank { get; set; }
         public int Points { get; set; }

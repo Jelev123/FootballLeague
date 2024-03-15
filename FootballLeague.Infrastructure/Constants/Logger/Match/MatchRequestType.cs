@@ -1,4 +1,4 @@
-﻿namespace FootballLeague.Core.Constants.Logger.Match
+﻿namespace FootballLeague.Infrastructure.Constants.Logger.Match
 {
     public enum MatchRequestType
     {
