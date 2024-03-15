@@ -2,12 +2,8 @@
 {
     using FootballLeague.Core.Constants.Logger;
     using FootballLeague.Core.Constants.Logger.Match;
-    using FootballLeague.Core.Constants.Logger.Team;
     using FootballLeague.Core.Contracts.Loger;
     using FootballLeague.Core.Contracts.Match;
-    using FootballLeague.Core.Contracts.Team;
-    using FootballLeague.Core.Services.Team;
-    using FootballLeague.Infrastructure.Data.Models;
     using FootballLeague.Infrastructure.InputModels.Match;
     using System.Collections.Generic;
     using System.Threading.Tasks;
