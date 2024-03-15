@@ -2,12 +2,12 @@
 {
     using FootballLeague.Core.Constants;
     using FootballLeague.Core.Constants.Logger;
+    using FootballLeague.Core.Constants.Logger.Team;
     using FootballLeague.Core.Contracts.Loger;
     using FootballLeague.Core.Contracts.Team;
     using FootballLeague.Core.Handlers.ErrorHandlers;
     using FootballLeague.Infrastructure.Data.Models;
     using FootballLeague.Infrastructure.InputModels.Team;
-    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
@@ -24,7 +24,7 @@
 
         public async Task CreateAsync(CreateTeamInputModel model)
         {
-            loggerService.LogInfo(RequestType.CreateTeam.ToString());
+            loggerService.LogInfo(TeamRequestType.CreateTeam.ToString());
 
             bool isTheNameAlreadyExist = await this.IsTheNameAlreadyExist(model.TeamName);
 
@@ -42,7 +42,7 @@
 
         public async Task<bool> DeleteTeamAsync(int teamId)
         {
-            loggerService.LogInfo(RequestType.DeleteTeam.ToString());
+            loggerService.LogInfo(TeamRequestType.DeleteTeam.ToString());
 
             if (await teamService.DeleteTeamAsync(teamId))
             {
@@ -60,7 +60,7 @@
 
         public async Task<bool> EditTeamAsync(EditTeamInputModel model, int teamId)
         {
-            loggerService.LogInfo(RequestType.UpdateTeam.ToString());
+            loggerService.LogInfo(TeamRequestType.UpdateTeam.ToString());
 
             bool editSuccess = await teamService.EditTeamAsync(model, teamId);
 
@@ -78,7 +78,7 @@
 
         public async Task<IEnumerable<AllTeamsModel>> GetAllTeamsAsync()
         {
-            loggerService.LogInfo(RequestType.GetAllTeams.ToString());
+            loggerService.LogInfo(TeamRequestType.GetAllTeams.ToString());
 
             var teams = await teamService.GetAllTeamsAsync();
 
@@ -89,7 +89,7 @@
 
         public async Task<ICollection<AllTeamsRanking>> GetAllTeamsRankingAsync()
         {
-            loggerService.LogInfo(RequestType.GetAllTeams.ToString());
+            loggerService.LogInfo(TeamRequestType.GetAllTeams.ToString());
 
             var teams = await teamService.GetAllTeamsRankingAsync();
 
@@ -100,7 +100,7 @@
 
         public async Task<TeamByIdInputModel> GetTeamById(int teamId)
         {
-            loggerService.LogInfo(RequestType.GetTeam.ToString());
+            loggerService.LogInfo(TeamRequestType.GetTeam.ToString());
 
             var team = await teamService.GetTeamById(teamId);
 
@@ -115,7 +115,7 @@
 
             if (isAlreadyExist)
             {
-                throw new ResourceAlreadyExistsException(string.Format(
+                throw new DataAlreadyExistsException(string.Format(
                 ErrorMessages.DataAlreadyExists,
                 typeof(Team).Name, teamName));
             }

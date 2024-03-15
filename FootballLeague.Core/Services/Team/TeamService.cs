@@ -23,9 +23,9 @@
 
         public async Task CreateAsync(CreateTeamInputModel model)
         {
-            bool isAlReadyExist = await IsTheNameAlreadyExist(model.TeamName);
+            bool isNameAlReadyExist = await IsTheNameAlreadyExist(model.TeamName);
 
-            if (isAlReadyExist)
+            if (isNameAlReadyExist)
             {
                 throw new ResourceAlreadyExistsException(string.Format(
                     ErrorMessages.DataAlreadyExists,
@@ -45,29 +45,36 @@
 
 
         public async Task<IEnumerable<AllTeamsModel>> GetAllTeamsAsync()
-        => await data.Teams
-                     .Where(team => !team.IsDeleted)
-                     .Select(t => new AllTeamsModel
-                     {
-                         Name = t.Name,
-                         CreatedOn = t.CreatedOn,
-                         ModifiedOn = (DateTime)t.ModifiedOn,
-                     }).ToListAsync();
-
+        {
+            return await data.Teams
+                      .Where(team => !team.IsDeleted)
+                      .Select(t => new AllTeamsModel
+                      {
+                          Name = t.Name,
+                          CreatedOn = t.CreatedOn,
+                          ModifiedOn = (DateTime)t.ModifiedOn,
+                      }).ToListAsync();
+        }
 
         public async Task<TeamByIdInputModel> GetTeamById(int teamId)
-        => await data.Teams.Where(team => team.Id == teamId && team.IsDeleted == false)
-           .Select(t => new TeamByIdInputModel
-           {
-               Name = t.Name,
-               CreatedOn = t.CreatedOn,
-               ModifiedOn = t.ModifiedOn,
-           }).FirstOrDefaultAsync();
+        {
+            return await data.Teams.Where(team => team.Id == teamId && team.IsDeleted == false)
+            .Select(t => new TeamByIdInputModel
+            {
+                Name = t.Name,
+                Points = t.Points,
+                HomeGoals = t.HomeMatches.Sum(g => g.HomeTeamGoals),
+                AwayGoals = t.AwayMatches.Sum(g => g.AwayTeamGoals),
+                TotalMatchPlayed = t.HomeMatches.Count() + t.AwayMatches.Count(),
+                CreatedOn = t.CreatedOn,
+                ModifiedOn = t.ModifiedOn,
+            }).FirstOrDefaultAsync();
 
-
+        }
         public async Task<bool> EditTeamAsync(EditTeamInputModel model, int teamId)
         {
             var team = await data.Teams.FirstOrDefaultAsync(t => t.Id == teamId);
+
             if (team != null)
             {
                 team.Name = model.Name;
@@ -78,12 +85,14 @@
             }
 
             return false;
-
         }
 
         public async Task<bool> DeleteTeamAsync(int teamId)
         {
-            var team = await data.Teams.FirstOrDefaultAsync(team => team.Id == teamId);
+            var team = await data.Teams
+                .Where(team => !team.IsDeleted)
+                .FirstOrDefaultAsync(team => team.Id == teamId);
+
             if (team != null)
             {
                 team.IsDeleted = true;
@@ -93,12 +102,15 @@
                 return true;
             }
 
-            return false;
+            throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Team).Name, "id", teamId));
         }
 
         public async Task<bool> IsTheNameAlreadyExist(string teamName)
-        => await data.Teams.AnyAsync(t => t.Name == teamName);
-
+        {
+            return await data.Teams.AnyAsync(t => t.Name == teamName);
+        }
 
         public async Task<ICollection<AllTeamsRanking>> GetAllTeamsRankingAsync()
         {
@@ -109,7 +121,8 @@
         }
 
         private async Task<ICollection<AllTeamsRanking>> GetTeamsWithRankingDataAsync()
-        => await data.Teams
+        {
+            return await data.Teams
                 .Where(team => !team.IsDeleted)
                 .Select(team => new AllTeamsRanking
                 {
@@ -129,15 +142,16 @@
                                   team.AwayMatches.Sum(x => x.AwayTeamGoals),
                 })
                 .ToListAsync();
-
+        }
 
         private void OrderTeamsByRanking(ref ICollection<AllTeamsRanking> teamsRanking)
-        => teamsRanking = teamsRanking.OrderByDescending(team => team.Points)
+        {
+            teamsRanking = teamsRanking.OrderByDescending(team => team.Points)
                                        .ThenByDescending(team => team.TotalGoalScored)
                                        .ThenByDescending(team => team.MatchesWon)
                                        .ThenByDescending(team => team.MatchesDraw)
                                        .ToList();
-
+        }
 
         private void SetRankingPositions(ref ICollection<AllTeamsRanking> teamsRanking)
         {

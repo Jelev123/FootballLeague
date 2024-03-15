@@ -1,6 +1,6 @@
-﻿namespace FootballLeague.Core.Constants.Logger
+﻿namespace FootballLeague.Core.Constants.Logger.Team
 {
-    public enum RequestType
+    public enum TeamRequestType
     {
         CreateTeam = 1,
         DeleteTeam = 2,

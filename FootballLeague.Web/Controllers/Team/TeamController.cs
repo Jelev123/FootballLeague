@@ -3,7 +3,9 @@
     using FootballLeague.Core.Contracts.Team;
     using FootballLeague.Infrastructure.InputModels.Team;
     using Microsoft.AspNetCore.Mvc;
-    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
     [Route("api/[controller]")]
@@ -18,102 +20,43 @@
         }
 
         [HttpPost("Create/")]
-        public async Task<IActionResult> CreateTeam(CreateTeamInputModel model)
+        public async Task<ActionResult> CreateTeam(CreateTeamInputModel model)
         {
-            try
-            {
-                await teamService.CreateAsync(model);
-                return Ok();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest("Failed to create team: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to create team: " + ex.Message);
-            }
+            await teamService.CreateAsync(model);
+            return Ok();
         }
 
         [HttpGet("AllTeams")]
-        public async Task<IActionResult> AllTeams()
+        public async Task<ActionResult<IEnumerable<AllTeamsModel>>> AllTeams()
         {
-            try
-            {
-                return Ok(await teamService.GetAllTeamsAsync());
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to get all teams: " + ex.Message);
-            }
+            var allTeams = await teamService.GetAllTeamsAsync();
+            return allTeams.ToList();
         }
 
         [HttpGet("TeamById")]
-        public async Task<IActionResult> TeamByid(int teamId)
+        public async Task<ActionResult<TeamByIdInputModel>> TeamByid(int teamId)
         {
-            try
-            {
-                return Ok(await teamService.GetTeamById(teamId));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to get  team: " + ex.Message);
-            }
+            var team = await teamService.GetTeamById(teamId);
+            return team;
         }
 
         [HttpPut("Edit")]
-        public async Task<IActionResult> EditTeam(EditTeamInputModel model, int teamId)
+        public async Task EditTeam(EditTeamInputModel model, int teamId)
         {
-            try
-            {
-                bool result = await teamService.EditTeamAsync(model, teamId);
-                if (result)
-                {
-                    return Ok("Team edited successfully.");
-                }
-                else
-                {
-                    return NotFound("Team not found.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to edit team: " + ex.Message);
-            }
+           await teamService.EditTeamAsync(model, teamId);
         }
 
         [HttpDelete("Delete")]
-        public async Task<IActionResult> DeleteTeam( int teamId)
+        public async Task DeleteTeam(int teamId)
         {
-            try
-            {
-                bool result = await teamService.DeleteTeamAsync(teamId);
-                if (result)
-                {
-                    return Ok("Team delete successfully.");
-                }
-                else
-                {
-                    return NotFound("Team not found.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to delete team: " + ex.Message);
-            }
+            await teamService.DeleteTeamAsync(teamId);
         }
 
         [HttpGet("TeamRanking")]
-        public async Task<IActionResult> TeamRanking()
+        public async Task<ActionResult<IEnumerable>> TeamRanking()
         {
-            try
-            {
-                return Ok(await teamService.GetAllTeamsRankingAsync());
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to get  team ranking: " + ex.Message);
-            }
+           var teamsRanking = await teamService.GetAllTeamsRankingAsync();
+            return teamsRanking.ToList();
         }
     }
 }

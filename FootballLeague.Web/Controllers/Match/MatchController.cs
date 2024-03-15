@@ -3,7 +3,8 @@
     using FootballLeague.Core.Contracts.Match;
     using FootballLeague.Infrastructure.InputModels.Match;
     using Microsoft.AspNetCore.Mvc;
-    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
     [Route("api/[controller]")]
@@ -20,91 +21,34 @@
         [HttpPost("Create/")]
         public async Task<IActionResult> CreateTeam(CreateMatchInputModel model)
         {
-            try
-            {
-                await matchService.CreateMatchAsync(model);
-                return Ok();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest("Failed to create match: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to create match: " + ex.Message);
-            }
+            await matchService.CreateMatchAsync(model);
+            return Ok();
         }
 
         [HttpGet("AllMatches")]
-        public async Task<IActionResult> AllMatches()
+        public async Task<ActionResult<IEnumerable<AllMatchesInputModels>>> AllMatches()
         {
-            try
-            {
-                return Ok(await matchService.AllMatchesAsync());
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest("Failed to get all matches: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to get all matches: " + ex.Message);
-            }
+            var allMatches = await matchService.AllMatchesAsync();
+            return allMatches.ToList();
         }
 
         [HttpGet("MatchById")]
-        public async Task<IActionResult> MatchById(int matchId)
+        public async Task<ActionResult<MatchByIdInputModel>> MatchById(int matchId)
         {
-            try
-            {
-                return Ok(await matchService.GetmatchByIdAsync(matchId));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest("Failed to get match: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to get match: " + ex.Message);
-            }
+            var match = await matchService.GetmatchByIdAsync(matchId);
+            return match;
         }
 
         [HttpPut("Edit")]
-        public async Task<IActionResult> EditMatch(EditMatchInputModel model, int matchId)
+        public async Task EditMatch(EditMatchInputModel model, int matchId)
         {
-            try
-            {
-                return Ok(await matchService.EditMatchAsync(model, matchId));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest("Failed to edit match: " + ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to edit match: " + ex.Message);
-            }
+           await matchService.EditMatchAsync(model, matchId);
         }
 
         [HttpDelete("Delete")]
-        public async Task<IActionResult> DeleteMatch(int matchId)
+        public async Task DeleteMatch(int matchId)
         {
-            try
-            {
-                bool result = await matchService.DeleteMatchAsync(matchId);
-                if (result)
-                {
-                    return Ok("Match edited successfully.");
-                }
-                else
-                {
-                    return NotFound("Match not found.");
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest("Failed to delte match: " + ex.Message);
-            }
+            await matchService.DeleteMatchAsync(matchId);
         }
     }
 }

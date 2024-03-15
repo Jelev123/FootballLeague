@@ -7,7 +7,7 @@
 
     public interface IMatchService
     {
-        Task CreateMatchAsync(CreateMatchInputModel model);
+        Task<bool> CreateMatchAsync(CreateMatchInputModel model);
         Task<IEnumerable<AllMatchesInputModels>> AllMatchesAsync();
         Task<MatchByIdInputModel> GetmatchByIdAsync(int matchId);
         Task<bool> EditMatchAsync(EditMatchInputModel model, int teamId);

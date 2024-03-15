@@ -1,5 +1,6 @@
 ﻿namespace FootballLeague.Core.Services.Match
 {
+    using Amazon.CloudWatchLogs.Model;
     using FootballLeague.Core.Constants;
     using FootballLeague.Core.Contracts.Match;
     using FootballLeague.Infrastructure.Data;
@@ -21,76 +22,116 @@
         }
 
 
-        public async Task CreateMatchAsync(CreateMatchInputModel model)
+        public async Task<bool> CreateMatchAsync(CreateMatchInputModel model)
         {
-            var match = new Match
+            var validate = await ValidateMatchAsync(model.HomeTeamId, model.AwayTeamId);
+
+            if (validate)
             {
-                AwayTeamId = model.AwayTeamId,
-                AwayTeamGoals = model.AwayTeamGoals,
-                HomeTeamId = model.HomeTeamId,
-                HomeTeamGoals = model.HomeTeamGoals,
-                CreatedOn = model.CreatedOn,
-                ModifiedOn = model.LastModifiedOn,
-            };
+                var match = new Match
+                {
+                    AwayTeamId = model.AwayTeamId,
+                    AwayTeamGoals = model.AwayTeamGoals,
+                    HomeTeamId = model.HomeTeamId,
+                    HomeTeamGoals = model.HomeTeamGoals,
+                    CreatedOn = model.CreatedOn,
+                    ModifiedOn = model.LastModifiedOn,
+                };
 
-            await data.Matches.AddAsync(match);
-            await data.SaveChangesAsync();
-        }
-
-        public async Task<IEnumerable<AllMatchesInputModels>> AllMatchesAsync()
-        => await data.Matches
-            .Where(m => m.IsDeleted == false)
-            .Select(match => new AllMatchesInputModels
-            {
-                HomeTeam = match.HomeTeam.Name,
-                AwayTeam = match.AwayTeam.Name,
-                Result = $"{match.HomeTeam.Name} {match.HomeTeamGoals} - {match.AwayTeamGoals} {match.AwayTeam.Name}",
-                Played = match.CreatedOn
-
-            }).ToListAsync();
-
-        public async Task<MatchByIdInputModel> GetmatchByIdAsync(int matchId)
-        => await data.Matches.Where(match => match.Id == matchId && match.IsDeleted == false)
-           .Select(m => new MatchByIdInputModel
-           {
-               AwayTeamName = m.AwayTeam.Name,
-               HomeTeamName = m.HomeTeam.Name,
-               Result = $"{m.HomeTeam.Name} {m.HomeTeamGoals} - {m.AwayTeamGoals} {m.AwayTeam.Name}",
-               Played = m.CreatedOn
-           }).FirstOrDefaultAsync();
-
-        public async Task<bool> EditMatchAsync(EditMatchInputModel model, int matchId)
-        {
-            var match = await data.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
-            if (match != null)
-            {
-                match.AwayTeamId = model.AwayTeamId;
-                match.AwayTeamGoals = model.AwayTeamGoals;
-                match.HomeTeamId = model.HomeTeamId;
-                match.HomeTeamGoals = model.HomeTeamGoals;
-                match.ModifiedOn = DateTime.UtcNow;
-                match.CreatedOn = model.Played;
-
+                await data.Matches.AddAsync(match);
                 await data.SaveChangesAsync();
+
                 return true;
             }
 
             return false;
+        }
+
+        public async Task<IEnumerable<AllMatchesInputModels>> AllMatchesAsync()
+        {
+            var matches = await data.Matches
+                         .Where(m => m.IsDeleted == false)
+                         .Select(match => new AllMatchesInputModels
+                         {
+                             HomeTeam = match.HomeTeam.Name,
+                             AwayTeam = match.AwayTeam.Name,
+                             Result = $"{match.HomeTeam.Name} {match.HomeTeamGoals} - {match.AwayTeamGoals} {match.AwayTeam.Name}",
+                             Played = match.CreatedOn
+                         })
+                         .ToListAsync();
+
+            if (matches == null || !matches.Any())
+            {
+                throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Match).Name, "id", matches));
+            }
+
+            return matches;
+        }
+
+        public async Task<MatchByIdInputModel> GetmatchByIdAsync(int matchId)
+        {
+            var match = await data.Matches.Where(match => match.Id == matchId && match.IsDeleted == false)
+
+            .Select(m => new MatchByIdInputModel
+            {
+                AwayTeamName = m.AwayTeam.Name,
+                HomeTeamName = m.HomeTeam.Name,
+                Result = $"{m.HomeTeam.Name} {m.HomeTeamGoals} - {m.AwayTeamGoals} {m.AwayTeam.Name}",
+                Played = m.CreatedOn
+            }).FirstOrDefaultAsync();
+
+            if (match == null)
+            {
+                throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Match).Name, "id", matchId));
+            }
+
+            return match;
+        }
+
+        public async Task<bool> EditMatchAsync(EditMatchInputModel model, int matchId)
+        {
+            var match = await data.Matches.FirstOrDefaultAsync(m => m.Id == matchId && !m.IsDeleted);
+
+            if (match == null)
+            {
+                throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Match).Name, "id", matchId));
+            }
+
+            await ValidateMatchAsync(model.HomeTeamId, model.AwayTeamId);
+
+            match.AwayTeamId = model.AwayTeamId;
+            match.AwayTeamGoals = model.AwayTeamGoals;
+            match.HomeTeamId = model.HomeTeamId;
+            match.HomeTeamGoals = model.HomeTeamGoals;
+            match.ModifiedOn = DateTime.UtcNow;
+            match.CreatedOn = model.Played;
+
+            await data.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> DeleteMatchAsync(int matchId)
         {
             var match = await data.Matches.FirstOrDefaultAsync(match => match.Id == matchId);
-            if (match != null)
+
+            if (match == null)
             {
-                match.IsDeleted = true;
-                match.ModifiedOn = DateTime.UtcNow;
-                match.DeletedOn = DateTime.UtcNow;
-                await data.SaveChangesAsync();
-                return true;
+                throw new ResourceNotFoundException(string.Format(
+                   ErrorMessages.DataDoesNotExist,
+                   typeof(Match).Name, "id", matchId));
             }
 
-            return false;
+            match.IsDeleted = true;
+            match.ModifiedOn = DateTime.UtcNow;
+            match.DeletedOn = DateTime.UtcNow;
+            await data.SaveChangesAsync();
+            return true;
         }
 
         public async Task UpdateTeamPointsAsync(UpdatePointsInputModel gameModel)
@@ -121,12 +162,41 @@
         private async Task UpdatePointsAsync(int teamId, int points)
         {
             var team = await data.Teams.FindAsync(teamId);
-            if (team != null)
+
+            if (team == null)
             {
-                team.Points += points;
-                team.ModifiedOn = DateTime.UtcNow;
-                await data.SaveChangesAsync();
+                throw new ResourceNotFoundException(string.Format(
+                ErrorMessages.DataDoesNotExist,
+                   typeof(Team).Name, "id", teamId));
             }
+
+            team.Points += points;
+            team.ModifiedOn = DateTime.UtcNow;
+            await data.SaveChangesAsync();
         }
+
+        private async Task<bool> ValidateMatchAsync(int homeTeamId, int awayTeamId)
+        {
+            if (homeTeamId == awayTeamId)
+                throw new ArgumentException(string.Format(
+                    ErrorMessages.SameTeams));
+
+            var isAwayTeamExist = await data.Teams.AnyAsync(team => team.Id == awayTeamId && !team.IsDeleted);
+
+            if (!isAwayTeamExist)
+                throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Team).Name, "id", awayTeamId));
+
+            var isHomeTeamExist = await data.Teams.AnyAsync(team => team.Id == homeTeamId && !team.IsDeleted);
+
+            if (!isHomeTeamExist)
+                throw new ResourceNotFoundException(string.Format(
+                    ErrorMessages.DataDoesNotExist,
+                    typeof(Team).Name, "id", homeTeamId));
+
+            return true;
+        }
+
     }
 }
