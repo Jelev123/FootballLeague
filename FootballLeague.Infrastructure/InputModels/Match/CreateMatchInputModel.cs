@@ -1,6 +1,6 @@
 ﻿namespace FootballLeague.Infrastructure.InputModels.Match
 {
-    using FootballLeague.Core.Constants.Attributes;
+    using FootballLeague.Infrastructure.Constants.Attributes;
     using System;
     using System.ComponentModel.DataAnnotations;
 

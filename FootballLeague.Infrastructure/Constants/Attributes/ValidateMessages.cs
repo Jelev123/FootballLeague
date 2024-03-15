@@ -1,4 +1,4 @@
-﻿namespace FootballLeague.Core.Constants.Attributes
+﻿namespace FootballLeague.Infrastructure.Constants.Attributes
 {
     public static class ValidateMessages
     {
