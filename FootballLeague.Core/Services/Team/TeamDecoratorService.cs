@@ -65,6 +65,7 @@
                     typeof(Team).Name, "id", teamId));
             }
 
+            await teamService.DeleteTeamAsync(teamId);
             loggerService.LogInfo(RequestStatus.Success.ToString());
         }
 
